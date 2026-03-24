@@ -43,16 +43,16 @@
 > 아래는 K-Vision AI가 생성한 한국 관광 이미지 샘플입니다.
 
 ### 경복궁 야경
-![경복궁](images/gyeongbokgung.jpg)
+![경복궁](gyeongbokgung.png)
 
 ### 제주 유채꽃밭
-![제주](images/jeju_canola.jpg)
+![제주](jeju_canola.png)
 
 ### 전주 한옥마을
-![전주](images/jeonju_hanok.jpg)
+![전주](jeonju_hanok.png)
 
 ### 한식 한상차림
-![한식](images/korean_food.jpg)
+![한식](korean_food.png)
 
 ---
 
