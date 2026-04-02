@@ -5,6 +5,15 @@
 [![License](https://img.shields.io/badge/License-공공저작물_자유이용-blue?style=flat-square)]()
 [![API](https://img.shields.io/badge/API_사용-없음-gray?style=flat-square)]()
 [![Status](https://img.shields.io/badge/Status-Beta-orange?style=flat-square)]()
+[![Demo](https://img.shields.io/badge/🌐_데모_바로가기-k--vision--ai-1D9E75?style=flat-square)](https://ggodol.github.io/k-vision-ai/)
+
+---
+
+## 🌐 서비스 데모
+
+> 아래 링크에서 K-Vision AI 서비스를 직접 체험해보세요.
+
+**👉 [https://ggodol.github.io/k-vision-ai/](https://ggodol.github.io/k-vision-ai/)**
 
 ---
 
