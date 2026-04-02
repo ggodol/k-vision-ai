@@ -1,0 +1,945 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>K-Vision AI</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;600;700&family=Noto+Sans+KR:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #1a1410;
+    --ink-soft: #3d3530;
+    --ink-muted: #8a7e76;
+    --paper: #faf7f2;
+    --paper-warm: #f3ede3;
+    --paper-card: #ffffff;
+    --celadon: #6b9e8a;
+    --celadon-light: #dff0e8;
+    --celadon-dark: #3d6b5a;
+    --red-clay: #c0604a;
+    --gold: #c9a84c;
+    --gold-light: #f5e9c8;
+    --border: rgba(26,20,16,0.1);
+    --border-strong: rgba(26,20,16,0.2);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Noto Sans KR', sans-serif;
+    background: var(--paper);
+    color: var(--ink);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* 배경 패턴 — 전통 창살 느낌 */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      repeating-linear-gradient(0deg, transparent, transparent 59px, rgba(26,20,16,0.04) 59px, rgba(26,20,16,0.04) 60px),
+      repeating-linear-gradient(90deg, transparent, transparent 59px, rgba(26,20,16,0.04) 59px, rgba(26,20,16,0.04) 60px);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .page { position: relative; z-index: 1; max-width: 1100px; margin: 0 auto; padding: 0 2rem; }
+
+  /* ── 헤더 ── */
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1.8rem 0 1.6rem;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .logo-mark {
+    width: 36px;
+    height: 36px;
+    background: var(--ink);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .logo-mark svg { width: 20px; height: 20px; }
+
+  .logo-text {
+    font-family: 'Noto Serif KR', serif;
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: var(--ink);
+  }
+
+  .logo-sub {
+    font-size: 11px;
+    color: var(--ink-muted);
+    font-weight: 300;
+    letter-spacing: 0.08em;
+    display: block;
+    margin-top: -2px;
+  }
+
+  .header-badge {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: var(--celadon-dark);
+    background: var(--celadon-light);
+    border: 1px solid rgba(107,158,138,0.3);
+    border-radius: 100px;
+    padding: 5px 12px;
+    font-weight: 500;
+  }
+
+  .header-badge::before {
+    content: '';
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--celadon);
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(0.8); }
+  }
+
+  /* ── 히어로 ── */
+  .hero {
+    text-align: center;
+    padding: 4rem 0 3rem;
+    animation: fadeUp 0.7s ease both;
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .hero-eyebrow {
+    font-size: 12px;
+    letter-spacing: 0.2em;
+    color: var(--celadon-dark);
+    font-weight: 500;
+    margin-bottom: 1rem;
+    text-transform: uppercase;
+  }
+
+  .hero-title {
+    font-family: 'Noto Serif KR', serif;
+    font-size: clamp(2rem, 5vw, 3.2rem);
+    font-weight: 700;
+    line-height: 1.25;
+    color: var(--ink);
+    letter-spacing: -0.03em;
+    margin-bottom: 1rem;
+  }
+
+  .hero-title em {
+    font-style: normal;
+    color: var(--celadon-dark);
+    position: relative;
+  }
+
+  .hero-title em::after {
+    content: '';
+    position: absolute;
+    bottom: 2px;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: var(--celadon);
+    border-radius: 2px;
+  }
+
+  .hero-desc {
+    font-size: 15px;
+    color: var(--ink-muted);
+    font-weight: 300;
+    line-height: 1.8;
+    max-width: 500px;
+    margin: 0 auto 0.8rem;
+  }
+
+  .data-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11.5px;
+    color: var(--ink-soft);
+    background: var(--gold-light);
+    border: 1px solid rgba(201,168,76,0.35);
+    border-radius: 100px;
+    padding: 4px 12px;
+    margin-top: 0.5rem;
+    font-weight: 400;
+  }
+
+  /* ── 메인 인터페이스 ── */
+  .main-interface {
+    display: grid;
+    grid-template-columns: 420px 1fr;
+    gap: 1.5rem;
+    margin-bottom: 3rem;
+    animation: fadeUp 0.7s 0.15s ease both;
+  }
+
+  /* 입력 패널 */
+  .input-panel {
+    background: var(--paper-card);
+    border: 1px solid var(--border-strong);
+    border-radius: 16px;
+    padding: 1.6rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.2rem;
+  }
+
+  .panel-label {
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--ink-muted);
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .panel-label::before {
+    content: '';
+    width: 3px;
+    height: 12px;
+    background: var(--celadon);
+    border-radius: 2px;
+  }
+
+  .prompt-textarea {
+    width: 100%;
+    min-height: 110px;
+    border: 1px solid var(--border-strong);
+    border-radius: 10px;
+    padding: 12px 14px;
+    font-family: 'Noto Sans KR', sans-serif;
+    font-size: 14px;
+    color: var(--ink);
+    background: var(--paper);
+    resize: none;
+    line-height: 1.7;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  .prompt-textarea::placeholder { color: var(--ink-muted); }
+  .prompt-textarea:focus { border-color: var(--celadon); }
+
+  /* 테마 태그 */
+  .theme-section { display: flex; flex-direction: column; gap: 8px; }
+
+  .theme-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .tag {
+    font-size: 12px;
+    padding: 5px 11px;
+    border-radius: 100px;
+    border: 1px solid var(--border-strong);
+    color: var(--ink-soft);
+    cursor: pointer;
+    transition: all 0.15s;
+    font-weight: 400;
+    background: transparent;
+    white-space: nowrap;
+  }
+
+  .tag:hover, .tag.active {
+    background: var(--ink);
+    color: var(--paper);
+    border-color: var(--ink);
+  }
+
+  /* 스타일 선택 */
+  .style-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+  }
+
+  .style-card {
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 10px 8px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.15s;
+    background: var(--paper);
+  }
+
+  .style-card:hover, .style-card.active {
+    border-color: var(--celadon);
+    background: var(--celadon-light);
+  }
+
+  .style-icon { font-size: 20px; margin-bottom: 4px; display: block; }
+  .style-name { font-size: 11px; color: var(--ink-soft); font-weight: 400; }
+
+  /* 생성 버튼 */
+  .generate-btn {
+    width: 100%;
+    padding: 14px;
+    background: var(--ink);
+    color: var(--paper);
+    border: none;
+    border-radius: 10px;
+    font-family: 'Noto Sans KR', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: all 0.2s;
+    letter-spacing: 0.02em;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .generate-btn::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: var(--celadon-dark);
+    transform: translateX(-100%);
+    transition: transform 0.3s ease;
+  }
+
+  .generate-btn:hover::before { transform: translateX(0); }
+  .generate-btn span { position: relative; z-index: 1; }
+  .generate-btn:active { transform: scale(0.99); }
+
+  .generate-btn.loading { pointer-events: none; }
+  .generate-btn.loading .btn-text { display: none; }
+  .generate-btn.loading .btn-loading { display: flex; align-items: center; gap: 8px; position: relative; z-index: 1; }
+  .generate-btn .btn-loading { display: none; }
+
+  .spinner {
+    width: 16px;
+    height: 16px;
+    border: 2px solid rgba(255,255,255,0.3);
+    border-top-color: white;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* 출력 패널 */
+  .output-panel {
+    background: var(--paper-card);
+    border: 1px solid var(--border-strong);
+    border-radius: 16px;
+    padding: 1.6rem;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .output-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+  }
+
+  .output-actions {
+    display: flex;
+    gap: 6px;
+  }
+
+  .action-btn {
+    font-size: 12px;
+    padding: 5px 12px;
+    border: 1px solid var(--border-strong);
+    border-radius: 6px;
+    background: transparent;
+    color: var(--ink-soft);
+    cursor: pointer;
+    font-family: 'Noto Sans KR', sans-serif;
+    transition: all 0.15s;
+  }
+
+  .action-btn:hover { background: var(--paper-warm); }
+  .action-btn.primary { background: var(--celadon); color: white; border-color: var(--celadon); }
+  .action-btn.primary:hover { background: var(--celadon-dark); }
+
+  /* 이미지 그리드 */
+  .image-grid {
+    flex: 1;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+
+  .image-card {
+    border-radius: 10px;
+    overflow: hidden;
+    position: relative;
+    aspect-ratio: 4/3;
+    background: var(--paper-warm);
+    border: 1px solid var(--border);
+    cursor: pointer;
+    transition: transform 0.2s;
+  }
+
+  .image-card:hover { transform: scale(1.02); }
+
+  .image-card img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
+  /* 플레이스홀더 이미지들 — SVG로 한국적 패턴 표현 */
+  .img-placeholder {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+
+  .img-result {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .image-card-overlay {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: linear-gradient(transparent, rgba(26,20,16,0.7));
+    padding: 20px 10px 10px;
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+
+  .image-card:hover .image-card-overlay { opacity: 1; }
+
+  .image-card-label {
+    font-size: 11px;
+    color: rgba(255,255,255,0.9);
+    font-weight: 400;
+  }
+
+  /* 빈 상태 */
+  .empty-state {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 3rem;
+    text-align: center;
+  }
+
+  .empty-icon {
+    width: 64px;
+    height: 64px;
+    border-radius: 16px;
+    background: var(--paper-warm);
+    border: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .empty-title { font-size: 15px; font-weight: 500; color: var(--ink-soft); }
+  .empty-desc { font-size: 13px; color: var(--ink-muted); line-height: 1.6; }
+
+  /* 로딩 상태 */
+  .loading-state {
+    flex: 1;
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+  }
+
+  .loading-state.show { display: flex; }
+
+  .loading-orbs {
+    display: flex;
+    gap: 10px;
+  }
+
+  .orb {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: var(--celadon);
+    animation: bounce 1.2s infinite ease-in-out;
+  }
+
+  .orb:nth-child(2) { animation-delay: 0.2s; background: var(--gold); }
+  .orb:nth-child(3) { animation-delay: 0.4s; background: var(--red-clay); }
+
+  @keyframes bounce {
+    0%, 100% { transform: translateY(0); opacity: 0.5; }
+    50% { transform: translateY(-12px); opacity: 1; }
+  }
+
+  .loading-text { font-size: 14px; color: var(--ink-muted); font-weight: 300; }
+
+  /* 결과 상태 */
+  .result-state { display: none; flex: 1; flex-direction: column; }
+  .result-state.show { display: flex; }
+
+  /* 하단 사례 갤러리 */
+  .gallery-section {
+    margin-bottom: 3rem;
+    animation: fadeUp 0.7s 0.3s ease both;
+  }
+
+  .section-header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin-bottom: 1.2rem;
+  }
+
+  .section-title {
+    font-family: 'Noto Serif KR', serif;
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--ink);
+  }
+
+  .section-more {
+    font-size: 12px;
+    color: var(--celadon-dark);
+    cursor: pointer;
+    font-weight: 500;
+  }
+
+  .gallery-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+  }
+
+  .gallery-card {
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    background: var(--paper-card);
+    transition: transform 0.2s, box-shadow 0.2s;
+    cursor: pointer;
+  }
+
+  .gallery-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 12px 32px rgba(26,20,16,0.1);
+  }
+
+  .gallery-img {
+    aspect-ratio: 3/2;
+    overflow: hidden;
+    background: var(--paper-warm);
+  }
+
+  .gallery-img svg { width: 100%; height: 100%; }
+
+  .gallery-img img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    transition: transform 0.3s ease;
+  }
+
+  .gallery-card:hover .gallery-img img { transform: scale(1.05); }
+
+  .gallery-info { padding: 10px 12px; }
+  .gallery-title { font-size: 13px; font-weight: 500; color: var(--ink-soft); margin-bottom: 2px; }
+  .gallery-meta { font-size: 11px; color: var(--ink-muted); }
+
+  /* 스탯 */
+  .stats-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-bottom: 3rem;
+    animation: fadeUp 0.7s 0.45s ease both;
+  }
+
+  .stat-card {
+    background: var(--paper-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.2rem 1.4rem;
+    text-align: center;
+  }
+
+  .stat-num {
+    font-family: 'Noto Serif KR', serif;
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--ink);
+    letter-spacing: -0.03em;
+  }
+
+  .stat-num span { color: var(--celadon-dark); }
+  .stat-label { font-size: 12px; color: var(--ink-muted); margin-top: 3px; font-weight: 300; }
+
+  /* 푸터 */
+  footer {
+    border-top: 1px solid var(--border);
+    padding: 1.5rem 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 12px;
+    color: var(--ink-muted);
+  }
+
+  .footer-logo {
+    font-family: 'Noto Serif KR', serif;
+    font-weight: 600;
+    font-size: 14px;
+    color: var(--ink-soft);
+  }
+
+  .footer-credit {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .ktc-badge {
+    background: var(--gold-light);
+    border: 1px solid rgba(201,168,76,0.3);
+    color: #8a6e1a;
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-weight: 500;
+  }
+
+  /* SVG 이미지 팔레트들 */
+  .svg-gyeongbok { background: linear-gradient(160deg, #1a2a4a 0%, #2d4a7a 50%, #1a3a5a 100%); }
+  .svg-jeju { background: linear-gradient(160deg, #87c5a0 0%, #f5d06e 60%, #e8f0d8 100%); }
+  .svg-jeonju { background: linear-gradient(160deg, #d4a574 0%, #c8865a 40%, #8b4e2a 100%); }
+  .svg-food { background: linear-gradient(160deg, #e8d5b0 0%, #c4956a 50%, #a0522d 100%); }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- 헤더 -->
+  <header>
+    <div class="logo">
+      <div class="logo-mark">
+        <svg viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M10 2L13 8H18L14 12L15.5 18L10 15L4.5 18L6 12L2 8H7L10 2Z" fill="#faf7f2" opacity="0.9"/>
+        </svg>
+      </div>
+      <div>
+        <div class="logo-text">K-Vision AI</div>
+        <span class="logo-sub">한국형 관광 이미지 생성</span>
+      </div>
+    </div>
+    <div class="header-badge">한국관광공사 콘텐츠랩 데이터 활용</div>
+  </header>
+
+  <!-- 히어로 -->
+  <div class="hero">
+    <div class="hero-eyebrow">Korea Tourism Image AI</div>
+    <h1 class="hero-title">한국의 아름다움을<br><em>AI로 새롭게</em></h1>
+    <p class="hero-desc">한국관광공사의 공식 관광 이미지로 학습한 AI가<br>한국 고유의 색감과 정서로 이미지를 생성합니다</p>
+    <div class="data-badge">
+      🏛 한국관광공사 관광 이미지 500장 학습 데이터 활용
+    </div>
+  </div>
+
+  <!-- 메인 인터페이스 -->
+  <div class="main-interface">
+
+    <!-- 입력 패널 -->
+    <div class="input-panel">
+      <div>
+        <div class="panel-label">프롬프트</div>
+        <textarea class="prompt-textarea" id="promptInput" placeholder="예) 가을 저녁, 고즈넉한 한옥 마을 골목길을 걷는 여행자&#10;예) 제주 바다가 보이는 돌담 카페&#10;예) 전통 한식 코스 요리 상차림"></textarea>
+      </div>
+
+      <div class="theme-section">
+        <div class="panel-label">테마 빠른 선택</div>
+        <div class="theme-tags">
+          <button class="tag" onclick="setTheme(this, '경복궁 야경, 달빛 아래 전통 궁궐')">🏯 고궁</button>
+          <button class="tag" onclick="setTheme(this, '제주 올레길, 유채꽃과 한라산')">🌿 제주</button>
+          <button class="tag" onclick="setTheme(this, '전주 한옥마을 골목, 한복 여행자')">🏘 한옥</button>
+          <button class="tag" onclick="setTheme(this, '전통 한식 한상차림, 도자기 그릇')">🍱 한식</button>
+          <button class="tag" onclick="setTheme(this, '봄 벚꽃 축제, 진해 군항제')">🌸 축제</button>
+          <button class="tag" onclick="setTheme(this, '부산 해운대 일출, 파도와 백사장')">🌊 해안</button>
+        </div>
+      </div>
+
+      <div>
+        <div class="panel-label">이미지 스타일</div>
+        <div class="style-grid">
+          <div class="style-card active" onclick="selectStyle(this)">
+            <span class="style-icon">🎨</span>
+            <div class="style-name">수채화풍</div>
+          </div>
+          <div class="style-card" onclick="selectStyle(this)">
+            <span class="style-icon">📷</span>
+            <div class="style-name">사진실사</div>
+          </div>
+          <div class="style-card" onclick="selectStyle(this)">
+            <span class="style-icon">🖼</span>
+            <div class="style-name">민화풍</div>
+          </div>
+          <div class="style-card" onclick="selectStyle(this)">
+            <span class="style-icon">🌆</span>
+            <div class="style-name">야경감성</div>
+          </div>
+          <div class="style-card" onclick="selectStyle(this)">
+            <span class="style-icon">🍂</span>
+            <div class="style-name">계절감</div>
+          </div>
+          <div class="style-card" onclick="selectStyle(this)">
+            <span class="style-icon">✏️</span>
+            <div class="style-name">일러스트</div>
+          </div>
+        </div>
+      </div>
+
+      <button class="generate-btn" id="genBtn" onclick="generate()">
+        <span class="btn-text"><span>✦</span> <span>이미지 생성하기</span></span>
+        <span class="btn-loading"><span class="spinner"></span> <span>생성 중...</span></span>
+      </button>
+    </div>
+
+    <!-- 출력 패널 -->
+    <div class="output-panel">
+      <div class="output-header">
+        <div class="panel-label">생성 결과</div>
+        <div class="output-actions" id="outputActions" style="display:none;">
+          <button class="action-btn">공유</button>
+          <button class="action-btn">재생성</button>
+          <button class="action-btn primary">다운로드</button>
+        </div>
+      </div>
+
+      <!-- 빈 상태 -->
+      <div class="empty-state" id="emptyState">
+        <div class="empty-icon">
+          <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+            <path d="M14 4C14 4 8 10 8 16C8 19.31 10.69 22 14 22C17.31 22 20 19.31 20 16C20 10 14 4 14 4Z" stroke="#8a7e76" stroke-width="1.5" fill="none"/>
+            <path d="M10 16C10 16 11 13 14 13C17 13 18 16 18 16" stroke="#8a7e76" stroke-width="1.5" stroke-linecap="round" fill="none"/>
+          </svg>
+        </div>
+        <div class="empty-title">프롬프트를 입력하고 생성해보세요</div>
+        <div class="empty-desc">한국관광공사 이미지로 학습된 AI가<br>한국적인 감성의 이미지를 만들어드립니다</div>
+      </div>
+
+      <!-- 로딩 상태 -->
+      <div class="loading-state" id="loadingState">
+        <div class="loading-orbs">
+          <div class="orb"></div>
+          <div class="orb"></div>
+          <div class="orb"></div>
+        </div>
+        <div class="loading-text" id="loadingText">한국적 색감을 분석하는 중...</div>
+      </div>
+
+      <!-- 결과 상태 -->
+      <div class="result-state" id="resultState">
+        <div class="image-grid" id="imageGrid"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 갤러리 섹션 -->
+  <div class="gallery-section">
+    <div class="section-header">
+      <div class="section-title">생성 사례</div>
+      <div class="section-more">전체 보기 →</div>
+    </div>
+    <div class="gallery-grid">
+      <div class="gallery-card">
+        <div class="gallery-img">
+          <img src="https://raw.githubusercontent.com/ggodol/k-vision-ai/refs/heads/main/gyeongbokgung.png" alt="경복궁 야경" style="width:100%;height:100%;object-fit:cover;display:block;">
+        </div>
+        <div class="gallery-info">
+          <div class="gallery-title">경복궁 달빛 야경</div>
+          <div class="gallery-meta">고궁 · 야경감성</div>
+        </div>
+      </div>
+      <div class="gallery-card">
+        <div class="gallery-img">
+          <img src="https://raw.githubusercontent.com/ggodol/k-vision-ai/refs/heads/main/jeju_canola.png" alt="제주 유채꽃밭" style="width:100%;height:100%;object-fit:cover;display:block;">
+        </div>
+        <div class="gallery-info">
+          <div class="gallery-title">제주 유채꽃밭</div>
+          <div class="gallery-meta">제주 · 수채화풍</div>
+        </div>
+      </div>
+      <div class="gallery-card">
+        <div class="gallery-img">
+          <img src="https://raw.githubusercontent.com/ggodol/k-vision-ai/refs/heads/main/jeonju_hanok.png" alt="전주 한옥마을" style="width:100%;height:100%;object-fit:cover;display:block;">
+        </div>
+        <div class="gallery-info">
+          <div class="gallery-title">전주 한옥마을</div>
+          <div class="gallery-meta">한옥 · 사진실사</div>
+        </div>
+      </div>
+      <div class="gallery-card">
+        <div class="gallery-img">
+          <img src="https://raw.githubusercontent.com/ggodol/k-vision-ai/refs/heads/main/korean_food.png" alt="한식 한상차림" style="width:100%;height:100%;object-fit:cover;display:block;">
+        </div>
+        <div class="gallery-info">
+          <div class="gallery-title">한식 한상차림</div>
+          <div class="gallery-meta">한식 · 계절감</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 스탯 -->
+  <div class="stats-row">
+    <div class="stat-card">
+      <div class="stat-num">500<span>+</span></div>
+      <div class="stat-label">한국관광공사 학습 이미지</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num">17<span>개</span></div>
+      <div class="stat-label">전국 시도 관광 테마 커버</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num">6<span>가지</span></div>
+      <div class="stat-label">이미지 스타일 옵션</div>
+    </div>
+  </div>
+
+  <!-- 푸터 -->
+  <footer>
+    <div class="footer-logo">K-Vision AI</div>
+    <div class="footer-credit">
+      <span>데이터 제공</span>
+      <span class="ktc-badge">한국관광공사 콘텐츠랩</span>
+    </div>
+    <div>© 2026 K-Vision AI. 공공저작물 자유이용허락</div>
+  </footer>
+
+</div>
+
+<script>
+  // 테마 선택
+  function setTheme(el, text) {
+    document.querySelectorAll('.tag').forEach(t => t.classList.remove('active'));
+    el.classList.add('active');
+    document.getElementById('promptInput').value = text;
+  }
+
+  // 스타일 선택
+  function selectStyle(el) {
+    document.querySelectorAll('.style-card').forEach(c => c.classList.remove('active'));
+    el.classList.add('active');
+  }
+
+  // 이미지 생성 시뮬레이션
+  const loadingMessages = [
+    '한국적 색감을 분석하는 중...',
+    '관광공사 학습 데이터 참조 중...',
+    '이미지 구도를 설계하는 중...',
+    '세부 디테일을 완성하는 중...'
+  ];
+
+  const sampleImages = [
+    { label: '경복궁 야경', src: 'https://raw.githubusercontent.com/ggodol/k-vision-ai/refs/heads/main/gyeongbokgung.png' },
+    { label: '제주 유채꽃밭', src: 'https://raw.githubusercontent.com/ggodol/k-vision-ai/refs/heads/main/jeju_canola.png' },
+    { label: '전주 한옥마을', src: 'https://raw.githubusercontent.com/ggodol/k-vision-ai/refs/heads/main/jeonju_hanok.png' },
+    { label: '한식 한상차림', src: 'https://raw.githubusercontent.com/ggodol/k-vision-ai/refs/heads/main/korean_food.png' },
+  ];
+
+  function generate() {
+    const prompt = document.getElementById('promptInput').value.trim();
+    if (!prompt) {
+      document.getElementById('promptInput').focus();
+      return;
+    }
+
+    const btn = document.getElementById('genBtn');
+    btn.classList.add('loading');
+    document.getElementById('emptyState').style.display = 'none';
+    document.getElementById('resultState').classList.remove('show');
+    document.getElementById('loadingState').classList.add('show');
+    document.getElementById('outputActions').style.display = 'none';
+
+    let msgIdx = 0;
+    const msgInterval = setInterval(() => {
+      msgIdx = (msgIdx + 1) % loadingMessages.length;
+      document.getElementById('loadingText').textContent = loadingMessages[msgIdx];
+    }, 800);
+
+    setTimeout(() => {
+      clearInterval(msgInterval);
+      document.getElementById('loadingState').classList.remove('show');
+
+      const grid = document.getElementById('imageGrid');
+      grid.innerHTML = '';
+
+      sampleImages.forEach((img, i) => {
+        const card = document.createElement('div');
+        card.className = 'image-card';
+        card.style.animationDelay = `${i * 0.1}s`;
+        card.innerHTML = `
+          <img src="${img.src}" alt="${img.label}" style="width:100%;height:100%;object-fit:cover;display:block;">
+          <div class="image-card-overlay">
+            <div class="image-card-label">${img.label}</div>
+          </div>
+        `;
+        card.style.cssText += 'animation: fadeUp 0.4s ease both;';
+        grid.appendChild(card);
+      });
+
+      document.getElementById('resultState').classList.add('show');
+      document.getElementById('outputActions').style.display = 'flex';
+      btn.classList.remove('loading');
+    }, 3200);
+  }
+
+  // Enter 키
+  document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('promptInput').addEventListener('keydown', e => {
+      if (e.key === 'Enter' && e.metaKey) generate();
+    });
+  });
+</script>
+</body>
+</html>
