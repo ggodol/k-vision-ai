@@ -113,7 +113,6 @@
   .gallery-info { padding: 10px 12px; }
   .gallery-title { font-size: 13px; font-weight: 500; color: var(--ink-soft); margin-bottom: 2px; }
   .gallery-meta { font-size: 11px; color: var(--ink-muted); }
-
   .stats-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 3rem; animation: fadeUp 0.7s 0.45s ease both; }
   .stat-card { background: var(--paper-card); border: 1px solid var(--border); border-radius: 12px; padding: 1.2rem 1.4rem; text-align: center; }
   .stat-num { font-family: 'Noto Serif KR', serif; font-size: 28px; font-weight: 700; letter-spacing: -0.03em; }
@@ -247,8 +246,9 @@
   </footer>
 </div>
 
-<script src="https://js.puter.com/v2/"></script>
 <script>
+  // ⚠️ 이 파일은 로컬 시연용입니다. GitHub에 올리지 마세요.
+  const WORKER_URL = 'https://kvision-proxy.gghost10.workers.dev';
   let selectedStyle = '수채화풍';
   let generatedImages = [];
 
@@ -299,30 +299,44 @@
     }, 900);
 
     const styleDesc = styleMap[selectedStyle] || 'high quality';
-    const basePrompt = `Korean tourism image, ${prompt}, ${styleDesc}, authentic Korean aesthetic, vibrant colors, high quality, Korea Tourism Organization style`;
+    const variations = [
+      `Korean tourism photo: ${prompt}, ${styleDesc}, authentic Korean colors, high quality`,
+      `Korean travel image: ${prompt}, ${styleDesc}, different composition, warm atmosphere`,
+      `Korea tourism: ${prompt}, ${styleDesc}, golden hour lighting, vivid colors`,
+      `Korean landscape: ${prompt}, ${styleDesc}, wide angle, rich cultural details`
+    ];
 
     try {
-      // Puter.js로 이미지 4장 순차 생성
+      const results = await Promise.all(
+        variations.map(v =>
+          fetch(WORKER_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              contents: [{ parts: [{ text: v }] }],
+              generationConfig: { responseModalities: ['TEXT', 'IMAGE'] }
+            })
+          }).then(r => r.json())
+        )
+      );
+
+      clearInterval(msgInterval);
+      document.getElementById('loadingState').classList.remove('show');
+
       const grid = document.getElementById('imageGrid');
       grid.innerHTML = '';
-      document.getElementById('resultState').classList.add('show');
 
-      for (let i = 0; i < 4; i++) {
-        const variations = [
-          basePrompt,
-          `${basePrompt}, different composition`,
-          `${basePrompt}, golden hour lighting`,
-          `${basePrompt}, wide angle panoramic view`
-        ];
-
-        try {
-          const imgElement = await puter.ai.txt2img(variations[i]);
-          const src = imgElement.src;
+      let hasImage = false;
+      results.forEach((res, i) => {
+        const parts = res?.candidates?.[0]?.content?.parts || [];
+        const imgPart = parts.find(p => p.inlineData);
+        if (imgPart) {
+          hasImage = true;
+          const src = `data:${imgPart.inlineData.mimeType};base64,${imgPart.inlineData.data}`;
           generatedImages.push(src);
-
           const card = document.createElement('div');
           card.className = 'image-card';
-          card.style.animation = `fadeUp 0.4s ease both`;
+          card.style.animation = `fadeUp 0.4s ${i * 0.15}s ease both`;
           card.innerHTML = `
             <img src="${src}" alt="생성 이미지 ${i+1}">
             <div class="image-card-overlay"><div class="image-card-label">${prompt.slice(0,20)}...</div></div>
@@ -334,24 +348,21 @@
             a.click();
           };
           grid.appendChild(card);
-        } catch(e) {
-          console.warn('이미지 생성 실패:', e);
         }
+      });
+
+      if (!hasImage) {
+        const errMsg = JSON.stringify(results[0]?.error || results[0]).slice(0, 150);
+        grid.innerHTML = `<div class="error-msg">이미지 생성에 실패했습니다.<br>잠시 후 다시 시도해주세요.<br><small style="opacity:0.6;">${errMsg}</small></div>`;
       }
 
-      clearInterval(msgInterval);
-      document.getElementById('loadingState').classList.remove('show');
-
-      if (generatedImages.length === 0) {
-        grid.innerHTML = `<div class="error-msg">이미지 생성에 실패했습니다.<br>잠시 후 다시 시도해주세요.</div>`;
-      }
-
-      document.getElementById('outputActions').style.display = generatedImages.length > 0 ? 'flex' : 'none';
+      document.getElementById('resultState').classList.add('show');
+      document.getElementById('outputActions').style.display = hasImage ? 'flex' : 'none';
 
     } catch(e) {
       clearInterval(msgInterval);
       document.getElementById('loadingState').classList.remove('show');
-      document.getElementById('imageGrid').innerHTML = `<div class="error-msg">오류: ${e.message}</div>`;
+      document.getElementById('imageGrid').innerHTML = `<div class="error-msg">연결 오류가 발생했습니다.<br>${e.message}</div>`;
       document.getElementById('resultState').classList.add('show');
     }
 
