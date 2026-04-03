@@ -247,8 +247,8 @@
   </footer>
 </div>
 
+<script src="https://js.puter.com/v2/"></script>
 <script>
-  const WORKER_URL = 'https://kvision-proxy.gghost10.workers.dev';
   let selectedStyle = '수채화풍';
   let generatedImages = [];
 
@@ -258,6 +258,15 @@
     '이미지 구도를 설계하는 중...',
     '세부 디테일을 완성하는 중...'
   ];
+
+  const styleMap = {
+    '수채화풍': 'watercolor painting style, soft brushstrokes',
+    '사진실사': 'photorealistic, professional travel photography',
+    '민화풍': 'Korean minhwa folk art style, traditional painting',
+    '야경감성': 'night photography, dramatic lighting, moody atmosphere',
+    '계절감': 'seasonal landscape, vivid natural colors',
+    '일러스트': 'illustration style, clean lines, artistic'
+  };
 
   function setTheme(el, text) {
     document.querySelectorAll('.tag').forEach(t => t.classList.remove('active'));
@@ -289,56 +298,31 @@
       document.getElementById('loadingText').textContent = loadingMessages[msgIdx];
     }, 900);
 
-    const styleMap = {
-      '수채화풍': 'watercolor painting style, soft brushstrokes',
-      '사진실사': 'photorealistic, professional travel photography',
-      '민화풍': 'Korean minhwa folk art style, traditional painting',
-      '야경감성': 'night photography, dramatic lighting, moody atmosphere',
-      '계절감': 'seasonal landscape, vivid natural colors',
-      '일러스트': 'illustration style, clean lines, artistic'
-    };
-
     const styleDesc = styleMap[selectedStyle] || 'high quality';
-    const variations = [
-      `${prompt}, ${styleDesc}, Korean aesthetic, vibrant colors, high quality`,
-      `${prompt}, ${styleDesc}, different angle, warm atmosphere, Korea tourism`,
-      `${prompt}, ${styleDesc}, golden hour lighting, Korean culture`,
-      `${prompt}, ${styleDesc}, wide angle, rich colors, travel photography`
-    ];
-
-    const systemPrompt = 'You are K-Vision AI, an image generation AI trained on 500 official Korea Tourism Organization images. Generate beautiful Korean tourism images with authentic Korean color palettes and cultural elements. ';
+    const basePrompt = `Korean tourism image, ${prompt}, ${styleDesc}, authentic Korean aesthetic, vibrant colors, high quality, Korea Tourism Organization style`;
 
     try {
-      const results = await Promise.all(
-        variations.map(v =>
-          fetch(WORKER_URL, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              contents: [{ parts: [{ text: systemPrompt + v }] }],
-              generationConfig: { responseModalities: ['TEXT', 'IMAGE'] }
-            })
-          }).then(r => r.json())
-        )
-      );
-
-      clearInterval(msgInterval);
-      document.getElementById('loadingState').classList.remove('show');
-
+      // Puter.js로 이미지 4장 순차 생성
       const grid = document.getElementById('imageGrid');
       grid.innerHTML = '';
+      document.getElementById('resultState').classList.add('show');
 
-      let hasImage = false;
-      results.forEach((res, i) => {
-        const parts = res?.candidates?.[0]?.content?.parts || [];
-        const imgPart = parts.find(p => p.inlineData);
-        if (imgPart) {
-          hasImage = true;
-          const src = `data:${imgPart.inlineData.mimeType};base64,${imgPart.inlineData.data}`;
+      for (let i = 0; i < 4; i++) {
+        const variations = [
+          basePrompt,
+          `${basePrompt}, different composition`,
+          `${basePrompt}, golden hour lighting`,
+          `${basePrompt}, wide angle panoramic view`
+        ];
+
+        try {
+          const imgElement = await puter.ai.txt2img(variations[i]);
+          const src = imgElement.src;
           generatedImages.push(src);
+
           const card = document.createElement('div');
           card.className = 'image-card';
-          card.style.animation = `fadeUp 0.4s ${i * 0.1}s ease both`;
+          card.style.animation = `fadeUp 0.4s ease both`;
           card.innerHTML = `
             <img src="${src}" alt="생성 이미지 ${i+1}">
             <div class="image-card-overlay"><div class="image-card-label">${prompt.slice(0,20)}...</div></div>
@@ -350,20 +334,24 @@
             a.click();
           };
           grid.appendChild(card);
+        } catch(e) {
+          console.warn('이미지 생성 실패:', e);
         }
-      });
-
-      if (!hasImage) {
-        grid.innerHTML = `<div class="error-msg">이미지 생성에 실패했습니다.<br>Worker 설정을 확인하거나 잠시 후 다시 시도해주세요.<br><small style="opacity:0.7;">${JSON.stringify(results[0]).slice(0,100)}</small></div>`;
       }
 
-      document.getElementById('resultState').classList.add('show');
-      document.getElementById('outputActions').style.display = hasImage ? 'flex' : 'none';
+      clearInterval(msgInterval);
+      document.getElementById('loadingState').classList.remove('show');
+
+      if (generatedImages.length === 0) {
+        grid.innerHTML = `<div class="error-msg">이미지 생성에 실패했습니다.<br>잠시 후 다시 시도해주세요.</div>`;
+      }
+
+      document.getElementById('outputActions').style.display = generatedImages.length > 0 ? 'flex' : 'none';
 
     } catch(e) {
       clearInterval(msgInterval);
       document.getElementById('loadingState').classList.remove('show');
-      document.getElementById('imageGrid').innerHTML = `<div class="error-msg">연결 오류: ${e.message}<br>Worker URL을 확인해주세요.</div>`;
+      document.getElementById('imageGrid').innerHTML = `<div class="error-msg">오류: ${e.message}</div>`;
       document.getElementById('resultState').classList.add('show');
     }
 
