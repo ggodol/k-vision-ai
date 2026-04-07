@@ -84,6 +84,7 @@
   .image-card-overlay { position: absolute; bottom: 0; left: 0; right: 0; background: linear-gradient(transparent, rgba(26,20,16,0.7)); padding: 20px 10px 10px; opacity: 0; transition: opacity 0.2s; }
   .image-card:hover .image-card-overlay { opacity: 1; }
   .image-card-label { font-size: 11px; color: rgba(255,255,255,0.9); }
+  .watermark { position: absolute; bottom: 7px; right: 9px; font-size: 10px; color: rgba(255,255,255,0.75); font-weight: 400; letter-spacing: 0.02em; text-shadow: 0 1px 3px rgba(0,0,0,0.5); pointer-events: none; }
   .empty-state { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; padding: 3rem; text-align: center; }
   .empty-icon { width: 64px; height: 64px; border-radius: 16px; background: var(--paper-warm); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; }
   .empty-title { font-size: 15px; font-weight: 500; color: var(--ink-soft); }
@@ -246,9 +247,9 @@
   </footer>
 </div>
 
+<script src="https://js.puter.com/v2/"></script>
 <script>
-  // ⚠️ 이 파일은 로컬 시연용입니다. GitHub에 올리지 마세요.
-  const WORKER_URL = 'https://kvision-proxy.gghost10.workers.dev';
+  // Puter.js 방식 — API 키 불필요, GitHub 공개 가능
   let selectedStyle = '수채화풍';
   let generatedImages = [];
 
@@ -306,73 +307,83 @@
       `Korean landscape: ${prompt}, ${styleDesc}, wide angle, rich cultural details`
     ];
 
+    const grid = document.getElementById('imageGrid');
+    grid.innerHTML = '';
+    document.getElementById('resultState').classList.add('show');
+
     try {
-      const results = await Promise.all(
-        variations.map(v =>
-          fetch(WORKER_URL, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              contents: [{ parts: [{ text: v }] }],
-              generationConfig: { responseModalities: ['TEXT', 'IMAGE'] }
-            })
-          }).then(r => r.json())
-        )
-      );
+      for (let i = 0; i < variations.length; i++) {
+        try {
+          const imgElement = await puter.ai.txt2img(variations[i]);
+          const src = imgElement.src;
+          generatedImages.push(src);
+
+          const card = document.createElement('div');
+          card.className = 'image-card';
+          card.style.animation = 'fadeUp 0.4s ease both';
+          card.innerHTML = `
+            <img src="${src}" alt="생성 이미지 ${i+1}">
+            <div class="image-card-overlay"><div class="image-card-label">${prompt.slice(0,20)}...</div></div>
+            <div class="watermark">ⓒ한국관광 콘텐츠랩</div>
+          `;
+          card.onclick = () => addWatermarkAndDownload(src, `k-vision-${i+1}.png`);
+          grid.appendChild(card);
+        } catch(e) {
+          console.warn(`이미지 ${i+1} 생성 실패:`, e);
+        }
+      }
 
       clearInterval(msgInterval);
       document.getElementById('loadingState').classList.remove('show');
 
-      const grid = document.getElementById('imageGrid');
-      grid.innerHTML = '';
-
-      let hasImage = false;
-      results.forEach((res, i) => {
-        const parts = res?.candidates?.[0]?.content?.parts || [];
-        const imgPart = parts.find(p => p.inlineData);
-        if (imgPart) {
-          hasImage = true;
-          const src = `data:${imgPart.inlineData.mimeType};base64,${imgPart.inlineData.data}`;
-          generatedImages.push(src);
-          const card = document.createElement('div');
-          card.className = 'image-card';
-          card.style.animation = `fadeUp 0.4s ${i * 0.15}s ease both`;
-          card.innerHTML = `
-            <img src="${src}" alt="생성 이미지 ${i+1}">
-            <div class="image-card-overlay"><div class="image-card-label">${prompt.slice(0,20)}...</div></div>
-          `;
-          card.onclick = () => {
-            const a = document.createElement('a');
-            a.href = src;
-            a.download = `k-vision-${i+1}.png`;
-            a.click();
-          };
-          grid.appendChild(card);
-        }
-      });
-
-      if (!hasImage) {
-        const errMsg = JSON.stringify(results[0]?.error || results[0]).slice(0, 150);
-        grid.innerHTML = `<div class="error-msg">이미지 생성에 실패했습니다.<br>잠시 후 다시 시도해주세요.<br><small style="opacity:0.6;">${errMsg}</small></div>`;
+      if (generatedImages.length === 0) {
+        grid.innerHTML = `<div class="error-msg">이미지 생성에 실패했습니다.<br>잠시 후 다시 시도해주세요.</div>`;
       }
 
-      document.getElementById('resultState').classList.add('show');
-      document.getElementById('outputActions').style.display = hasImage ? 'flex' : 'none';
+      document.getElementById('outputActions').style.display = generatedImages.length > 0 ? 'flex' : 'none';
 
     } catch(e) {
       clearInterval(msgInterval);
       document.getElementById('loadingState').classList.remove('show');
-      document.getElementById('imageGrid').innerHTML = `<div class="error-msg">연결 오류가 발생했습니다.<br>${e.message}</div>`;
-      document.getElementById('resultState').classList.add('show');
+      grid.innerHTML = `<div class="error-msg">오류가 발생했습니다.<br>${e.message}</div>`;
     }
 
     btn.classList.remove('loading');
   }
 
+  function addWatermarkAndDownload(src, filename) {
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = img.width;
+      canvas.height = img.height;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0);
+      const text = 'ⓒ한국관광 콘텐츠랩';
+      const fontSize = Math.max(14, img.width * 0.022);
+      ctx.font = `${fontSize}px sans-serif`;
+      const textW = ctx.measureText(text).width;
+      const pad = fontSize * 0.5;
+      const x = img.width - textW - pad * 2 - 10;
+      const y = img.height - fontSize - pad - 10;
+      ctx.fillStyle = 'rgba(0,0,0,0.38)';
+      ctx.beginPath();
+      ctx.roundRect(x - pad, y - pad, textW + pad * 2, fontSize + pad * 1.4, 4);
+      ctx.fill();
+      ctx.fillStyle = 'rgba(255,255,255,0.9)';
+      ctx.fillText(text, x, y + fontSize * 0.82);
+      const a = document.createElement('a');
+      a.href = canvas.toDataURL('image/png');
+      a.download = filename;
+      a.click();
+    };
+    img.src = src;
+  }
+
   function downloadAll() {
     generatedImages.forEach((src, i) => {
-      const a = document.createElement('a');
-      a.href = src; a.download = `k-vision-${i+1}.png`; a.click();
+      addWatermarkAndDownload(src, `k-vision-${i+1}.png`);
     });
   }
 
